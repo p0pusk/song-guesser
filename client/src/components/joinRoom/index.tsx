@@ -1,6 +1,8 @@
 import React, { useContext, useState } from "react";
+import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import { auth } from "../../firebase";
 import gameContext from "../../gameContext";
 import gameService from "../../services/gameService";
 import socketService from "../../services/socketService";
@@ -48,10 +50,11 @@ const JoinButton = styled.button`
 
 export function JoinRoom(props: IJoinRoomProps) {
   const [roomName, setRoomName] = useState("");
+  const [user, loading, error] = useAuthState(auth);
   const [isJoining, setJoining] = useState(false);
   const navigate = useNavigate();
 
-  const { setInRoom, isInRoom } = useContext(gameContext);
+  const { setInRoom, isInRoom, roomId, setRoomId } = useContext(gameContext);
 
   const handleRoomNameChange = (e: React.ChangeEvent<any>) => {
     const value = e.target.value;
@@ -60,6 +63,11 @@ export function JoinRoom(props: IJoinRoomProps) {
 
   const joinRoom = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      navigate("/");
+      return;
+    }
+
     const socket = socketService.socket;
     if (!roomName || roomName.trim() === "" || !socket) return;
 
@@ -73,25 +81,30 @@ export function JoinRoom(props: IJoinRoomProps) {
 
     if (joined) {
       setInRoom(true);
-      navigate(`/lobby=${socket.id}`);
+      setRoomId(`lobby=${roomName}`);
+      navigate(`/lobby=${roomName}`);
     }
 
     setJoining(false);
   };
 
   return (
-    <form onSubmit={joinRoom}>
-      <JoinRoomContainer>
-        <h4>Enter Room ID</h4>
-        <RoomIdInput
-          placeholder="Room ID"
-          value={roomName}
-          onChange={handleRoomNameChange}
-        />
-        <JoinButton type="submit" disabled={isJoining}>
-          {isJoining ? "Joining..." : "Join"}
-        </JoinButton>
-      </JoinRoomContainer>
-    </form>
+    <div className="App">
+      <header className="App-header">
+        <form onSubmit={joinRoom}>
+          <JoinRoomContainer>
+            <h4>Enter Room ID</h4>
+            <RoomIdInput
+              placeholder="Room ID"
+              value={roomName}
+              onChange={handleRoomNameChange}
+            />
+            <JoinButton type="submit" disabled={isJoining}>
+              {isJoining ? "Joining..." : "Join"}
+            </JoinButton>
+          </JoinRoomContainer>
+        </form>
+      </header>
+    </div>
   );
 }
