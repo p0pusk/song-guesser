@@ -18,13 +18,18 @@ export class Room {
     client.data.lobby = this;
   }
 
-  public emit(message: any) {
-    this.server.to(this.id).emit(message);
+  public emit(message: any, args: any = undefined) {
+    if (args) {
+      this.server.to(this.id).emit(message, args);
+    } else {
+      this.server.to(this.id).emit(message);
+    }
   }
 
   public removeClient(client: AuthSocket): void {
     this.clients.delete(client.id);
     client.leave(this.id);
     client.data.lobby = null;
+    client.data.ready = false;
   }
 }

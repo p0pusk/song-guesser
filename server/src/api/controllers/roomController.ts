@@ -1,3 +1,4 @@
+import { Auth } from "firebase/auth";
 import {
   ConnectedSocket,
   EmitOnSuccess,
@@ -115,6 +116,12 @@ export class RoomController {
     } else {
       socket.emit("start_game_error");
     }
+  }
+
+  @OnMessage("ready")
+  public playerReady(@ConnectedSocket() socket: AuthSocket) {
+    socket.data.ready = true;
+    socket.data.lobby.emit("player_ready", { uid: socket.data.uid });
   }
 
   @OnDisconnect()

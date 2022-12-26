@@ -1,20 +1,39 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
+import ReactPlayer from "react-player";
 import { useLocation, useNavigate, useNavigation } from "react-router-dom";
+import Popup from "reactjs-popup";
 import authContext from "../../authContext";
 import { auth, db } from "../../firebase";
 import gameContext from "../../gameContext";
-import gameService, { UserData } from "../../services/gameService";
+import LobbyContext from "../../lobbyContext";
+import lobbyContext, { ILobbyContextProps } from "../../lobbyContext";
+import gameService, { IUser } from "../../services/gameService";
 import socketService from "../../services/socketService";
+import { GameInterface } from "../gameInterface";
+import { PregameButtons } from "../pregameButtons";
 
 export function Game() {
   const navigation = useNavigate();
 
   const [user, loading, error] = useAuthState(auth);
-  const { roomId } = useContext(gameContext);
-  const [players, setPlayers] = useState<UserData[]>();
-  const { isAuth, login, avatar } = useContext(authContext);
-  const [lobbyPlayers, setLobbyPlayers] = useState([null]);
+  const [hostId, setHostId] = useState("");
+  const [isSelecting, setSelecting] = useState(false);
+  const [isReady, setReady] = useState(false);
+  const { roomId, isInGame, setInGame } = useContext(gameContext);
+  const [players, setPlayers] = useState<IUser[]>();
+  const [isSongPlaying, setSongPlaying] = useState(false);
+
+  const lobbyContextValues: ILobbyContextProps = {
+    players,
+    setPlayers,
+    hostId,
+    setHostId,
+    isSelecting,
+    setSelecting,
+    isReady,
+    setReady,
+  };
 
   const updatePlayers = async () => {
     if (!socketService.socket || !roomId) return;
@@ -25,6 +44,15 @@ export function Game() {
     if (res) {
       setPlayers(res);
     }
+    if (hostId === "") {
+      if (!user) return;
+      setHostId(user.uid);
+    }
+  };
+
+  const syncPlayers = () => {
+    if (!socketService.socket) return;
+    updatePlayers();
 
     gameService.onNewPlayer(socketService.socket, () => {
       console.log("new player");
@@ -32,65 +60,66 @@ export function Game() {
     });
 
     gameService.onGameStarted(socketService.socket, () => {
-      alert("Game started");
-      console.log("kkes");
+      setInGame(true);
       updatePlayers();
+      setSelecting(true);
     });
 
     gameService.onPlayerLeave(socketService.socket, () => {
       console.log("player left");
       updatePlayers();
     });
+
+    gameService.onPlayerReady(socketService.socket, () => {
+      updatePlayers();
+    });
   };
 
   useEffect(() => {
-    if (!socketService.socket) return;
     if (!user) {
       navigation("/");
       return;
     }
 
-    updatePlayers();
+    syncPlayers();
   }, []);
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <div>
-          {players?.map((value) => {
-            return <h4 key={value.uid}>player: {value.name}</h4>;
-          })}
-        </div>
-        {!gameService.started ? (
-          <>
-            <button
-              className="App-button"
-              onClick={() =>
-                navigator.clipboard.writeText(roomId ? roomId : "")
-              }
-            >
-              Copy room token
-            </button>
-            <button
-              className="App-button"
-              onClick={() => socketService.socket?.emit("start_game")}
-            >
-              Start
-            </button>
-            <button
-              className="App-button"
-              onClick={() => {
-                socketService.socket?.emit("leave_room");
-                navigation("/home");
-              }}
-            >
-              Exit
-            </button>
-          </>
-        ) : (
-          <></>
-        )}
-      </header>
-    </div>
+    <LobbyContext.Provider value={lobbyContextValues}>
+      <div className="App">
+        <header className="App-header">
+          <div>
+            {players?.map((value) => {
+              return (
+                <h4 key={value.uid}>
+                  player {players.indexOf(value) + 1}: {value.name}{" "}
+                  {isInGame ? (value.ready ? "(ready)" : "(preparing)") : ""}
+                </h4>
+              );
+            })}
+          </div>
+          <button onClick={() => setSongPlaying(!isSongPlaying)}> Play </button>
+          <PregameButtons />
+        </header>
+        <ReactPlayer
+          url="https://soundcloud.com/tol1kebol1k/kiddo-laser-minion-rush"
+          height={0}
+          width={0}
+          playing={isSongPlaying}
+        />
+        <Popup
+          open={isSelecting}
+          onClose={() => {
+            console.log("PopupClosed");
+          }}
+          position="top center"
+          closeOnEscape={false}
+          closeOnDocumentClick={false}
+          modal
+        >
+          <GameInterface />
+        </Popup>
+      </div>
+    </LobbyContext.Provider>
   );
 }

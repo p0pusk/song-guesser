@@ -8,5 +8,6 @@ export type AuthSocket = Socket & {
     email: string;
     avatar: File | null;
     lobby: null | Room;
+    ready: boolean;
   };
 };

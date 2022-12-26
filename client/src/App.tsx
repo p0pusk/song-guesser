@@ -15,6 +15,7 @@ import socketService from "./services/socketService";
 
 function App() {
   const [isInRoom, setInRoom] = useState(false);
+  const [isInGame, setInGame] = useState(false);
   const [roomId, setRoomId] = useState("");
   const [players, setPlayers] = useState(
     new Array<{ id: string; login: string; avatar: File | null }>()
@@ -29,6 +30,8 @@ function App() {
     setInRoom,
     roomId,
     setRoomId,
+    isInGame,
+    setInGame,
   };
 
   const authContextValue: IAuthContextProps = {

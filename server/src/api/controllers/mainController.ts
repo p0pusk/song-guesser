@@ -12,11 +12,11 @@ import { Socket, Server } from "socket.io";
 import { AuthSocket } from "../lobby/AuthSocket";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../firebase";
-import { UserData } from "../lobby/userData";
+import { IUser } from "../lobby/userData";
 
 @SocketController()
 export class MainController {
-  fetchUserData = async (id: string): Promise<UserData> => {
+  fetchUserData = async (id: string): Promise<IUser> => {
     return new Promise(async (res, rej) => {
       try {
         const q = query(collection(db, "users"), where("uid", "==", id));
@@ -27,6 +27,7 @@ export class MainController {
           name: data.name,
           email: data.email,
           avatar: data.avatar,
+          ready: false,
         });
       } catch (err) {
         rej(err);
@@ -42,10 +43,7 @@ export class MainController {
   }
 
   @OnConnect()
-  public onConnection(
-    @ConnectedSocket() socket: Socket,
-    @SocketIO() io: Server
-  ) {
+  public onConnection(@ConnectedSocket() socket: Socket) {
     this.initSocket(socket as AuthSocket);
   }
 

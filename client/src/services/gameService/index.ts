@@ -1,11 +1,12 @@
 import { Socket } from "socket.io-client";
 import socketService from "../socketService";
 
-export type UserData = {
+export type IUser = {
   uid: string;
   name: string;
   email: string;
   avatar: File | null;
+  ready: boolean;
 };
 
 class GameService {
@@ -51,7 +52,7 @@ class GameService {
   public async getRoomClients(
     socket: Socket,
     roomId: string
-  ): Promise<UserData[]> {
+  ): Promise<IUser[]> {
     return new Promise((res, rej) => {
       socket.emit("get_clients", { roomId: roomId });
       socket.on("get_clients_success", (message) => {
@@ -71,6 +72,10 @@ class GameService {
 
   public onGameStarted(socket: Socket, listener: () => void) {
     socket.on("game_started", listener);
+  }
+
+  public onPlayerReady(socket: Socket, listener: () => void) {
+    socket.on("player_ready", listener);
   }
 }
 

@@ -36,6 +36,7 @@ class SocketService {
   }
 
   public disconnect() {
+    this.socket?.emit("leave_room");
     this.socket?.disconnect();
   }
 }

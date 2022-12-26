@@ -1,6 +1,6 @@
 import { Server } from "socket.io";
 import { AuthSocket } from "./AuthSocket";
-import { UserData } from "./userData";
+import { IUser } from "./userData";
 import { Room } from "./Room";
 
 class RoomManager {
@@ -18,6 +18,7 @@ class RoomManager {
     client.data.email = null;
     client.data.uid = null;
     client.data.avatar = null;
+    client.data.ready = false;
   }
 
   public terminateSocket(client: AuthSocket) {
@@ -47,13 +48,14 @@ class RoomManager {
       throw "[Get clients data]: Lobby not found";
     }
 
-    let data = new Array<UserData>();
+    let data = new Array<IUser>();
     room.clients.forEach((client) => {
       data.push({
         uid: client.data.uid,
         name: client.data.name,
         email: client.data.email,
         avatar: client.data.avatar,
+        ready: false,
       });
     });
     return data;
