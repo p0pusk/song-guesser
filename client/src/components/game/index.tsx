@@ -3,12 +3,11 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import ReactPlayer from "react-player";
 import { useLocation, useNavigate, useNavigation } from "react-router-dom";
 import Popup from "reactjs-popup";
-import authContext from "../../authContext";
 import { auth, db } from "../../firebase";
 import gameContext from "../../gameContext";
 import LobbyContext from "../../lobbyContext";
 import lobbyContext, { ILobbyContextProps } from "../../lobbyContext";
-import gameService, { IUser } from "../../services/gameService";
+import gameService, { ISong, IUser } from "../../services/gameService";
 import socketService from "../../services/socketService";
 import { GameInterface } from "../gameInterface";
 import { PregameButtons } from "../pregameButtons";
@@ -23,6 +22,12 @@ export function Game() {
   const { roomId, isInGame, setInGame } = useContext(gameContext);
   const [players, setPlayers] = useState<IUser[]>();
   const [isSongPlaying, setSongPlaying] = useState(false);
+  const [song, setSong] = useState({
+    url: "https://www.youtube.com/watch?v=-_3dc6X-Iwo",
+    answer: "",
+    holderID: "",
+    holderName: "",
+  });
 
   const lobbyContextValues: ILobbyContextProps = {
     players,
@@ -71,7 +76,18 @@ export function Game() {
     });
 
     gameService.onPlayerReady(socketService.socket, () => {
+      console.log("player ready");
       updatePlayers();
+    });
+
+    socketService.socket.on("next_round", (message) => {
+      setSong({
+        url: message.data.url,
+        answer: message.data.answer,
+        holderID: message.data.holderID,
+        holderName: message.data.holderName,
+      });
+      setSongPlaying(true);
     });
   };
 
@@ -92,20 +108,42 @@ export function Game() {
             {players?.map((value) => {
               return (
                 <h4 key={value.uid}>
-                  player {players.indexOf(value) + 1}: {value.name}{" "}
+                  {user?.uid === value.uid
+                    ? "you"
+                    : `player ${players.indexOf(value) + 1}`}
+                  : {value.name}
                   {isInGame ? (value.ready ? "(ready)" : "(preparing)") : ""}
                 </h4>
               );
             })}
           </div>
-          <button onClick={() => setSongPlaying(!isSongPlaying)}> Play </button>
+          {isSongPlaying ? (
+            <div>
+              <h1>Now playing...</h1>
+              <p>Name: {song.answer}</p>
+              <p>By: {song.holderName}</p>
+            </div>
+          ) : (
+            <></>
+          )}
+
+          <button
+            onClick={() => {
+              setSongPlaying(!isSongPlaying);
+              console.log("play");
+              console.log(song);
+            }}
+          >
+            Play
+          </button>
           <PregameButtons />
         </header>
         <ReactPlayer
-          url="https://soundcloud.com/tol1kebol1k/kiddo-laser-minion-rush"
+          url={song.url}
           height={0}
           width={0}
           playing={isSongPlaying}
+          pip={false}
         />
         <Popup
           open={isSelecting}

@@ -1,5 +1,4 @@
 import { Socket } from "socket.io-client";
-import socketService from "../socketService";
 
 export type IUser = {
   uid: string;
@@ -9,8 +8,15 @@ export type IUser = {
   ready: boolean;
 };
 
+export type ISong = {
+  url: string;
+  answer: string;
+  holderID: string;
+  holderName: string;
+};
+
 class GameService {
-  public started: boolean = false;
+  public started = false;
 
   public async joinGameRoom(socket: Socket, roomId: string): Promise<boolean> {
     return new Promise((res, rej) => {
@@ -60,6 +66,10 @@ class GameService {
       });
       socket.on("get_clients_error", ({ error }) => rej(error));
     });
+  }
+
+  public submitSong(socket: Socket, song: ISong) {
+    socket.emit("submit_song", song);
   }
 
   public onNewPlayer(socket: Socket, listener: () => void) {

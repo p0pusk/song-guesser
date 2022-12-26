@@ -21,13 +21,13 @@ export function PregameButtons() {
     return roomId.includes(user.uid);
   };
 
+  const onAnswer = () => {
+    console.log("keks");
+  };
+
   return (
     <>
-      <button
-        className="App-button"
-        onClick={() => console.log("kek")}
-        hidden={!isInGame}
-      >
+      <button className="App-button" onClick={onAnswer} hidden={!isInGame}>
         Answer!
       </button>
       <button

@@ -1,4 +1,5 @@
 import { Room } from "./Room";
+import { ISong } from "./UserTypes";
 
 export class Instance {
   public hasStarted: boolean = false;
@@ -8,6 +9,10 @@ export class Instance {
   public isSuspended: boolean = false;
 
   public currentRound: number = 1;
+
+  public songs: ISong[] = new Array<ISong>();
+
+  public songsPool: ISong[] = new Array<ISong>();
 
   constructor(private readonly lobby: Room) {}
 }

@@ -5,3 +5,10 @@ export type IUser = {
   avatar: File | null;
   ready: boolean;
 };
+
+export type ISong = {
+  url: string;
+  answer: string;
+  holderID: string;
+  holderName: string;
+};

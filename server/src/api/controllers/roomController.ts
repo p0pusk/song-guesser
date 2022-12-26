@@ -10,8 +10,10 @@ import {
   SocketIO,
 } from "socket-controllers";
 import { Server, Socket } from "socket.io";
+import socket from "../../socket";
 import { AuthSocket } from "../lobby/AuthSocket";
 import RoomManager from "../lobby/RoomManager";
+import { ISong } from "../lobby/UserTypes";
 
 @SocketController()
 export class RoomController {
@@ -106,15 +108,19 @@ export class RoomController {
   }
 
   @OnMessage("start_game")
-  public startGame(@SocketIO() io: Server, @ConnectedSocket() socket: Socket) {
+  public startGame(
+    @SocketIO() io: Server,
+    @ConnectedSocket() socket: AuthSocket
+  ) {
     const socketRooms = Array.from(socket.rooms.values()).filter(
       (r) => r !== socket.id
     );
 
     if (socketRooms.length === 1) {
-      io.to(socketRooms[0]).emit("game_started");
+      socket.data.lobby.instance.hasStarted = true;
+      socket.data.lobby.emit("game_started");
     } else {
-      socket.emit("start_game_error");
+      socket.emit("start_game_error", { error: "Socket in another room" });
     }
   }
 
@@ -122,6 +128,41 @@ export class RoomController {
   public playerReady(@ConnectedSocket() socket: AuthSocket) {
     socket.data.ready = true;
     socket.data.lobby.emit("player_ready", { uid: socket.data.uid });
+
+    let allReady = true;
+    socket.data.lobby.clients.forEach((client) => {
+      if (!client.data.ready) {
+        allReady = false;
+      }
+    });
+
+    console.log("all ready:", allReady);
+    if (allReady) {
+      socket.data.lobby.instance.songsPool = [
+        ...socket.data.lobby.instance.songs,
+      ];
+      const song = socket.data.lobby.getNextSong();
+      console.log(song);
+      socket.data.lobby.emit("next_round", { data: song });
+    }
+  }
+
+  @OnMessage("round_end")
+  public roundEnd(
+    @ConnectedSocket() socket: AuthSocket,
+    @MessageBody() message: any
+  ) {}
+
+  @OnMessage("submit_song")
+  public submitSong(
+    @ConnectedSocket() socket: AuthSocket,
+    @MessageBody() song: ISong
+  ) {
+    try {
+      socket.data.lobby.addSong(song);
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   @OnDisconnect()

@@ -12,7 +12,7 @@ import { Socket, Server } from "socket.io";
 import { AuthSocket } from "../lobby/AuthSocket";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../firebase";
-import { IUser } from "../lobby/userData";
+import { IUser } from "../lobby/UserTypes";
 
 @SocketController()
 export class MainController {

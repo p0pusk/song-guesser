@@ -1,6 +1,11 @@
 import React, { useContext, useState } from "react";
+import { useAuthState } from "react-firebase-hooks/auth";
+import ReactPlayer from "react-player";
 import styled from "styled-components";
+import authContext from "../../authContext";
+import { auth } from "../../firebase";
 import lobbyContext from "../../lobbyContext";
+import gameService, { ISong } from "../../services/gameService";
 import socketService from "../../services/socketService";
 
 const FormContainer = styled.div`
@@ -48,6 +53,8 @@ const FormButton = styled.button`
 
 export function GameInterface() {
   const { isSelecting, setSelecting, setReady } = useContext(lobbyContext);
+  const { login } = useContext(authContext);
+  const [user] = useAuthState(auth);
   const [url, setUrl] = useState("");
   const [answer, setAnswer] = useState("");
 
@@ -61,11 +68,29 @@ export function GameInterface() {
     setAnswer(value);
   };
 
+  const checkUrl = (url: string): boolean => {
+    return ReactPlayer.canPlay(url);
+  };
+
   const submitSong = (e: React.FormEvent) => {
+    if (!user || !socketService.socket || !login) return;
     e.preventDefault();
+
+    if (!checkUrl(url)) {
+      alert("Can't play this url");
+      return;
+    }
+
     setSelecting(false);
     setReady(true);
-    socketService.socket?.emit("ready");
+    const song: ISong = {
+      url: url,
+      answer: answer,
+      holderID: user.uid,
+      holderName: login,
+    };
+    gameService.submitSong(socketService.socket, song);
+    socketService.socket.emit("ready");
   };
 
   return (
@@ -82,7 +107,9 @@ export function GameInterface() {
           onChange={handleAnswerChange}
           placeholder="answer"
         />
-        <FormButton type="submit">Submit</FormButton>
+        <FormButton type="submit" disabled={url === "" && answer === ""}>
+          Submit
+        </FormButton>
       </FormContainer>
     </form>
   );

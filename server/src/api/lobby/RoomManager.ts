@@ -1,6 +1,6 @@
 import { Server } from "socket.io";
 import { AuthSocket } from "./AuthSocket";
-import { IUser } from "./userData";
+import { IUser } from "./UserTypes";
 import { Room } from "./Room";
 
 class RoomManager {

@@ -12,6 +12,7 @@ export function Home() {
   const [user, loading, error] = useAuthState(auth);
   const { isInRoom, setInRoom, setRoomId } = useContext(gameContext);
   const { login, setLogin, avatar } = useContext(authContext);
+
   const navigate = useNavigate();
 
   const createLobby = async (e: React.FormEvent) => {

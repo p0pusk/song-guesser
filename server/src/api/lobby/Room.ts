@@ -1,6 +1,7 @@
 import { Server, Socket } from "socket.io";
 import { AuthSocket } from "./AuthSocket";
 import { Instance } from "./Instance";
+import { ISong } from "./UserTypes";
 
 export class Room {
   public readonly clients: Map<Socket["id"], AuthSocket> = new Map();
@@ -24,6 +25,17 @@ export class Room {
     } else {
       this.server.to(this.id).emit(message);
     }
+  }
+
+  public addSong(song: ISong) {
+    this.instance.songs.push(song);
+  }
+
+  public getNextSong() {
+    const max = this.instance.songsPool.length;
+    const random = Math.floor(Math.random() * max);
+    this.instance.songsPool.splice(random, 1);
+    return this.instance.songsPool.at(random);
   }
 
   public removeClient(client: AuthSocket): void {
