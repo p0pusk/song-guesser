@@ -10,12 +10,14 @@ import "./login.css";
 import authContext from "../../authContext";
 import { fetchUserData } from "../../utils/utils";
 import socketService from "../../services/socketService";
+import gameContext from "../../gameContext";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [user, loading, error] = useAuthState(auth);
-  const { login, setLogin, avatar, setAvatar } = useContext(authContext);
+  const { setLogin, setAvatar } = useContext(authContext);
+  const { isInRoom, setInRoom } = useContext(gameContext);
   const navigate = useNavigate();
 
   const updateAuth = async () => {
@@ -32,10 +34,18 @@ function Login() {
       // maybe trigger a loading screen
       return;
     }
+    if (isInRoom) {
+      socketService.leave_room();
+      setInRoom(false);
+    }
     if (user) {
       navigate("/home");
-      updateAuth();
-      socketService.connect("http://localhost:8000", user.uid);
+      try {
+        updateAuth();
+        socketService.connect("http://localhost:8000", user.uid);
+      } catch (e) {
+        alert(e);
+      }
     }
   }, [user, loading]);
 

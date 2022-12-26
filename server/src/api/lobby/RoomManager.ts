@@ -7,6 +7,7 @@ class RoomManager {
   public server: Server;
 
   public rooms: Map<Room["id"], Room>;
+  public maxClients = 2;
 
   constructor() {
     this.rooms = new Map();
@@ -24,8 +25,7 @@ class RoomManager {
   }
 
   public createRoom(id: string): Room {
-    let maxClients = 2;
-    const lobby = new Room(id, this.server, maxClients);
+    const lobby = new Room(id, this.server, this.maxClients);
     this.rooms.set(lobby.id, lobby);
     return lobby;
   }
@@ -33,10 +33,10 @@ class RoomManager {
   public joinRoom(id: string, client: AuthSocket) {
     const room = this.rooms.get(id);
     if (!room) {
-      throw new Error("Lobby not found");
+      throw "Lobby not found";
     }
     if (room.clients.size === room.maxClients) {
-      throw new Error("Lobby full");
+      throw "Lobby full";
     }
     room.addClient(client);
   }
@@ -44,12 +44,13 @@ class RoomManager {
   public getClientsData(roomId: string) {
     const room = this.rooms.get(roomId);
     if (!room) {
-      throw new Error("Lobby not found");
+      throw "[Get clients data]: Lobby not found";
     }
 
     let data = new Array<UserData>();
     room.clients.forEach((client) => {
       data.push({
+        uid: client.data.uid,
         name: client.data.name,
         email: client.data.email,
         avatar: client.data.avatar,

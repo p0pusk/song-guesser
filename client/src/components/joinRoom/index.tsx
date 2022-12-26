@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
@@ -81,12 +81,22 @@ export function JoinRoom(props: IJoinRoomProps) {
 
     if (joined) {
       setInRoom(true);
-      setRoomId(`lobby=${roomName}`);
-      navigate(`/lobby=${roomName}`);
+      setRoomId(roomName);
+      navigate(`/${roomName}`);
     }
 
     setJoining(false);
   };
+
+  useEffect(() => {
+    if (!user) {
+      navigate("/");
+    }
+    if (isInRoom) {
+      socketService.leave_room();
+      setInRoom(false);
+    }
+  }, []);
 
   return (
     <div className="App">

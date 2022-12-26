@@ -2,13 +2,13 @@ import {
   ConnectedSocket,
   EmitOnSuccess,
   MessageBody,
+  OnConnect,
   OnDisconnect,
   OnMessage,
   SocketController,
   SocketIO,
 } from "socket-controllers";
 import { Server, Socket } from "socket.io";
-import socket from "../../socket";
 import { AuthSocket } from "../lobby/AuthSocket";
 import RoomManager from "../lobby/RoomManager";
 
@@ -18,6 +18,13 @@ export class RoomController {
 
   constructor(@SocketIO() io: Server) {
     this.roomManager.server = io;
+  }
+
+  @OnConnect()
+  public async initServer(@SocketIO() io: Server) {
+    if (!this.roomManager.server) {
+      this.roomManager.server = io;
+    }
   }
 
   @OnMessage("create_room")
@@ -34,6 +41,7 @@ export class RoomController {
       console.log(e);
       socket.emit("create_room_error", { error: e });
     }
+    console.log(socket.data.name, "created room:", message.roomId);
   }
 
   @OnMessage("join_room")
@@ -45,16 +53,28 @@ export class RoomController {
     try {
       this.roomManager.joinRoom(message.roomId, socket);
       this.roomManager.rooms.get(message.roomId).emit("new_player");
+      socket.emit("new_player", {
+        data: {
+          uid: socket.data.uid,
+          name: socket.data.name,
+          avatar: socket.data.avatar,
+          email: socket.data.email,
+        },
+      });
       console.log(`${socket.data.name} joined ${message.roomId}`);
     } catch (e) {
       console.log(e);
       socket.emit("join_room_error", { error: e });
     }
+    this.roomManager.rooms.get(message.roomId).clients.forEach((client) => {
+      console.log("in room: ", client.data.name);
+    });
   }
 
   @OnMessage("leave_room")
   public async leaveRoom(@ConnectedSocket() socket: AuthSocket) {
     console.log(`[room ${socket.data.lobby.id}]: exiting ${socket.data.name}`);
+    socket.data.lobby.emit("player_leave");
     this.roomManager.terminateSocket(socket);
   }
 
@@ -72,13 +92,13 @@ export class RoomController {
   }
 
   @OnMessage("get_clients")
-  @EmitOnSuccess("get_clients_success")
   public async getClients(
     @ConnectedSocket() socket: AuthSocket,
     @MessageBody() message: any
   ) {
     try {
       const data = this.roomManager.getClientsData(message.roomId);
+      socket.emit("get_clients_success", { data: data });
     } catch (e) {
       socket.emit("get_clients_error", { error: e });
     }

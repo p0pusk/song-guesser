@@ -30,6 +30,11 @@ class SocketService {
     });
   }
 
+  public leave_room() {
+    this.socket?.emit("leave_room");
+    this.socket?.removeAllListeners();
+  }
+
   public disconnect() {
     this.socket?.disconnect();
   }

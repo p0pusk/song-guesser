@@ -4,16 +4,15 @@ import { useLocation, useNavigate, useNavigation } from "react-router-dom";
 import authContext from "../../authContext";
 import { auth, db } from "../../firebase";
 import gameContext from "../../gameContext";
-import gameService from "../../services/gameService";
+import gameService, { UserData } from "../../services/gameService";
 import socketService from "../../services/socketService";
-import { fetchUserData } from "../../utils/utils";
 
 export function Game() {
-  const location = useLocation();
   const navigation = useNavigate();
 
   const [user, loading, error] = useAuthState(auth);
-  const { players, setPlayers, roomId } = useContext(gameContext);
+  const { roomId } = useContext(gameContext);
+  const [players, setPlayers] = useState<UserData[]>();
   const { isAuth, login, avatar } = useContext(authContext);
   const [lobbyPlayers, setLobbyPlayers] = useState([null]);
 
@@ -22,46 +21,26 @@ export function Game() {
     const res = await gameService
       .getRoomClients(socketService.socket, roomId)
       .catch((err) => alert(err));
-    console.log(res);
 
-    const new_players = players;
+    if (res) {
+      setPlayers(res);
+    }
 
-    res?.forEach(async (id: string) => {
-      const data = await fetchUserData(id);
-      const search = players.find((value) => {
-        return value.id === id;
-      });
-      if (search) {
-        search.login = data.login;
-        search.avatar = data.avatar;
-      } else {
-        new_players.push({ id: id, login: data.login, avatar: data.avatar });
-      }
-    });
-
-    setPlayers(new_players);
-
-    socketService.socket.on("new_player", async (message: any) => {
+    gameService.onNewPlayer(socketService.socket, () => {
       console.log("new player");
-      const new_players = players;
-      const data = await fetchUserData(message.userId);
-      const search = players.find((value) => {
-        return value.id === message.userId;
-      });
-      if (search) {
-        search.login = data.login;
-        search.avatar = data.avatar;
-      } else {
-        new_players.push({
-          id: message.userId,
-          login: data.login,
-          avatar: data.avatar,
-        });
-      }
-      setPlayers(new_players);
+      updatePlayers();
     });
 
-    console.log(players);
+    gameService.onGameStarted(socketService.socket, () => {
+      alert("Game started");
+      console.log("kkes");
+      updatePlayers();
+    });
+
+    gameService.onPlayerLeave(socketService.socket, () => {
+      console.log("player left");
+      updatePlayers();
+    });
   };
 
   useEffect(() => {
@@ -72,19 +51,14 @@ export function Game() {
     }
 
     updatePlayers();
-
-    gameService.onGameStarted(socketService.socket, () => {
-      console.log("Game started");
-      updatePlayers();
-    });
-  }, [players]);
+  }, []);
 
   return (
     <div className="App">
       <header className="App-header">
         <div>
-          {players.map((value) => {
-            return <h4>{value.login}</h4>;
+          {players?.map((value) => {
+            return <h4 key={value.uid}>player: {value.name}</h4>;
           })}
         </div>
         {!gameService.started ? (

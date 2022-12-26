@@ -1,4 +1,12 @@
 import { Socket } from "socket.io-client";
+import socketService from "../socketService";
+
+export type UserData = {
+  uid: string;
+  name: string;
+  email: string;
+  avatar: File | null;
+};
 
 class GameService {
   public started: boolean = false;
@@ -43,14 +51,22 @@ class GameService {
   public async getRoomClients(
     socket: Socket,
     roomId: string
-  ): Promise<string[]> {
+  ): Promise<UserData[]> {
     return new Promise((res, rej) => {
       socket.emit("get_clients", { roomId: roomId });
-      socket.on("get_clients_res", (message) => {
-        res(message.clients);
+      socket.on("get_clients_success", (message) => {
+        res(message.data);
       });
       socket.on("get_clients_error", ({ error }) => rej(error));
     });
+  }
+
+  public onNewPlayer(socket: Socket, listener: () => void) {
+    socket.on("new_player", listener);
+  }
+
+  public onPlayerLeave(socket: Socket, listener: () => void) {
+    socket.on("player_leave", listener);
   }
 
   public onGameStarted(socket: Socket, listener: () => void) {

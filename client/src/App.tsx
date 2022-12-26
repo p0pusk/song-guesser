@@ -1,17 +1,8 @@
-import { useContext, useEffect, useState } from "react";
-import {
-  Route,
-  Routes,
-  Link,
-  Navigate,
-  useNavigate,
-  useLocation,
-} from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Route, Routes, useNavigate, useLocation } from "react-router-dom";
 import "./App.css";
-import socketService from "./services/socketService";
 import { Game } from "./components/game";
 import { Home } from "./components/home";
-import gameService from "./services/gameService";
 import GameContext, { IGameContextProps } from "./gameContext";
 import AuthContext, { IAuthContextProps } from "./authContext";
 import Login from "./components/login";
@@ -19,14 +10,10 @@ import Register from "./components/register";
 import Reset from "./components/reset";
 import { auth } from "./firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { log } from "console";
-import { fetchUserData } from "./utils/utils";
 import { JoinRoom } from "./components/joinRoom";
+import socketService from "./services/socketService";
 
 function App() {
-  const location = useLocation();
-
-  const [isJoining, setJoining] = useState(false);
   const [isInRoom, setInRoom] = useState(false);
   const [roomId, setRoomId] = useState("");
   const [players, setPlayers] = useState(
@@ -42,8 +29,6 @@ function App() {
     setInRoom,
     roomId,
     setRoomId,
-    players,
-    setPlayers,
   };
 
   const authContextValue: IAuthContextProps = {
@@ -58,32 +43,13 @@ function App() {
   const navigation = useNavigate();
 
   useEffect(() => {
-    const roomId = location.pathname.substring(1).trim();
-
     if (!user) {
       navigation("/");
-    } else if (roomId.includes("lobby=")) {
-      const socket = socketService.socket;
-      if (!socket) return;
-
-      setJoining(true);
-      gameService.checkGameRoom(socket, roomId).then((value) => {
-        if (value) {
-          gameService
-            .joinGameRoom(socket, roomId)
-            .then(() => {
-              setRoomId(roomId);
-              navigation(location.pathname);
-              return;
-            })
-            .catch((err) => alert(err));
-        } else {
-          alert("Lobby doesn't exist");
-          navigation("/home");
-        }
-        setJoining(false);
-      });
-    } else navigation("/");
+    }
+    if (isInRoom) {
+      socketService.leave_room();
+      setInRoom(false);
+    }
   }, []);
 
   return (

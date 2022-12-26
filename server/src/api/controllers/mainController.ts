@@ -22,7 +22,12 @@ export class MainController {
         const q = query(collection(db, "users"), where("uid", "==", id));
         const doc = await getDocs(q);
         const data = doc.docs[0].data();
-        res({ name: data.name, email: data.email, avatar: data.avatar });
+        res({
+          uid: id,
+          name: data.name,
+          email: data.email,
+          avatar: data.avatar,
+        });
       } catch (err) {
         rej(err);
       }

@@ -5,14 +5,6 @@ export interface IGameContextProps {
   setInRoom: (inRoom: boolean) => void;
   roomId: string | null;
   setRoomId: (id: string) => void;
-  players: { id: string; login: string; avatar: File | null }[];
-  setPlayers: (
-    players: {
-      id: string;
-      login: string;
-      avatar: File | null;
-    }[]
-  ) => void;
 }
 
 const defaultState: IGameContextProps = {
@@ -20,8 +12,6 @@ const defaultState: IGameContextProps = {
   setInRoom: () => {},
   roomId: null,
   setRoomId: () => {},
-  players: new Array<{ id: string; login: string; avatar: File | null }>(),
-  setPlayers: () => {},
 };
 
 export default React.createContext(defaultState);
