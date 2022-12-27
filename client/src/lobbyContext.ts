@@ -10,6 +10,14 @@ export interface ILobbyContextProps {
   setSelecting: (selecting: boolean) => void;
   isReady: boolean;
   setReady: (ready: boolean) => void;
+  isListening: boolean;
+  setListening: (listening: boolean) => void;
+  isAnswering: boolean;
+  setAnswering: (answering: boolean) => void;
+  isChecking: boolean;
+  setChecking: (checking: boolean) => void;
+  canAnswer: boolean;
+  setCanAnswer: (can: boolean) => void;
 }
 
 const defaultState: ILobbyContextProps = {
@@ -21,6 +29,14 @@ const defaultState: ILobbyContextProps = {
   setSelecting: () => {},
   isReady: false,
   setReady: () => {},
+  isListening: false,
+  setListening: () => {},
+  isAnswering: false,
+  setAnswering: () => {},
+  isChecking: false,
+  setChecking: () => {},
+  canAnswer: true,
+  setCanAnswer: () => {},
 };
 
 export default React.createContext(defaultState);

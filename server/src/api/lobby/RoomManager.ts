@@ -55,7 +55,7 @@ class RoomManager {
         name: client.data.name,
         email: client.data.email,
         avatar: client.data.avatar,
-        ready: false,
+        ready: client.data.ready,
       });
     });
     return data;

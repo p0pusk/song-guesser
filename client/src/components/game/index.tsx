@@ -10,7 +10,7 @@ import lobbyContext, { ILobbyContextProps } from "../../lobbyContext";
 import gameService, { ISong, IUser } from "../../services/gameService";
 import socketService from "../../services/socketService";
 import { GameInterface } from "../gameInterface";
-import { PregameButtons } from "../pregameButtons";
+import { PregameButtons } from "../gameUI/pregameButtons";
 
 export function Game() {
   const navigation = useNavigate();
@@ -19,9 +19,12 @@ export function Game() {
   const [hostId, setHostId] = useState("");
   const [isSelecting, setSelecting] = useState(false);
   const [isReady, setReady] = useState(false);
+  const [isAnswering, setAnswering] = useState(false);
+  const [isChecking, setChecking] = useState(false);
+  const [canAnswer, setCanAnswer] = useState(true);
   const { roomId, isInGame, setInGame } = useContext(gameContext);
   const [players, setPlayers] = useState<IUser[]>();
-  const [isSongPlaying, setSongPlaying] = useState(false);
+  const [isListening, setListening] = useState(false);
   const [song, setSong] = useState({
     url: "https://www.youtube.com/watch?v=-_3dc6X-Iwo",
     answer: "",
@@ -38,6 +41,14 @@ export function Game() {
     setSelecting,
     isReady,
     setReady,
+    isListening,
+    setListening,
+    isAnswering,
+    setAnswering,
+    isChecking,
+    setChecking,
+    canAnswer,
+    setCanAnswer,
   };
 
   const updatePlayers = async () => {
@@ -56,7 +67,7 @@ export function Game() {
   };
 
   const syncPlayers = () => {
-    if (!socketService.socket) return;
+    if (!socketService.socket || !user) return;
     updatePlayers();
 
     gameService.onNewPlayer(socketService.socket, () => {
@@ -78,6 +89,7 @@ export function Game() {
     gameService.onPlayerReady(socketService.socket, () => {
       console.log("player ready");
       updatePlayers();
+      console.log(players);
     });
 
     socketService.socket.on("next_round", (message) => {
@@ -87,7 +99,20 @@ export function Game() {
         holderID: message.data.holderID,
         holderName: message.data.holderName,
       });
-      setSongPlaying(true);
+
+      if (message.data.holderID === user.uid) {
+        setCanAnswer(false);
+      }
+      setListening(true);
+    });
+
+    socketService.socket.on("player_answer", (message) => {
+      if (message.uid === user.uid) {
+        setAnswering(true);
+      } else if (song.holderID === user.uid) {
+        console.log("cheking keke");
+        setChecking(true);
+      }
     });
   };
 
@@ -117,7 +142,7 @@ export function Game() {
               );
             })}
           </div>
-          {isSongPlaying ? (
+          {isListening ? (
             <div>
               <h1>Now playing...</h1>
               <p>Name: {song.answer}</p>
@@ -127,22 +152,13 @@ export function Game() {
             <></>
           )}
 
-          <button
-            onClick={() => {
-              setSongPlaying(!isSongPlaying);
-              console.log("play");
-              console.log(song);
-            }}
-          >
-            Play
-          </button>
           <PregameButtons />
         </header>
         <ReactPlayer
           url={song.url}
           height={0}
           width={0}
-          playing={isSongPlaying}
+          playing={isListening}
           pip={false}
         />
         <Popup

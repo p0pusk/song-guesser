@@ -141,10 +141,20 @@ export class RoomController {
       socket.data.lobby.instance.songsPool = [
         ...socket.data.lobby.instance.songs,
       ];
+
+      console.log(socket.data.lobby.instance.songsPool);
       const song = socket.data.lobby.getNextSong();
       console.log(song);
       socket.data.lobby.emit("next_round", { data: song });
     }
+  }
+
+  @OnMessage("player_answer")
+  public playerAnswer(
+    @ConnectedSocket() socket: AuthSocket,
+    @MessageBody() message: { uid: string }
+  ) {
+    socket.data.lobby.emit("player_answer", { uid: message.uid });
   }
 
   @OnMessage("round_end")

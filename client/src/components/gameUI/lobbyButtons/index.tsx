@@ -1,38 +1,32 @@
-import React, { useContext, useState } from "react";
+import { useContext } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
-import { auth } from "../../firebase";
-import gameContext from "../../gameContext";
-import lobbyContext from "../../lobbyContext";
-import socketService from "../../services/socketService";
+import { auth } from "../../../firebase";
+import gameContext from "../../../gameContext";
+import lobbyContext from "../../../lobbyContext";
+import socketService from "../../../services/socketService";
 
-export function PregameButtons() {
+export function LobbyButtons() {
   const { roomId, isInGame, setInGame } = useContext(gameContext);
+  const { players, hostId, isListening, setListening } =
+    useContext(lobbyContext);
   const [user] = useAuthState(auth);
-  const { players, hostId } = useContext(lobbyContext);
-  const navigation = useNavigate();
 
-  const startGame = () => {
-    socketService?.socket?.emit("start_game");
-  };
+  const navigation = useNavigate();
 
   const isHost = (): boolean => {
     if (!user || !roomId) return false;
     return roomId.includes(user.uid);
   };
 
-  const onAnswer = () => {
-    console.log("keks");
+  const startGame = () => {
+    socketService?.socket?.emit("start_game");
   };
 
   return (
     <>
-      <button className="App-button" onClick={onAnswer} hidden={!isInGame}>
-        Answer!
-      </button>
       <button
         className="App-button"
-        hidden={isInGame}
         onClick={() => navigator.clipboard.writeText(roomId ? roomId : "")}
       >
         Copy room token
@@ -40,7 +34,7 @@ export function PregameButtons() {
       <button
         className="App-button"
         onClick={startGame}
-        hidden={!(isHost() && !isInGame && players && players.length > 1)}
+        hidden={!(isHost() && players && players.length > 1)}
       >
         Start
       </button>

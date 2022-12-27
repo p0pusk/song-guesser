@@ -34,8 +34,10 @@ export class Room {
   public getNextSong() {
     const max = this.instance.songsPool.length;
     const random = Math.floor(Math.random() * max);
+    const res = this.instance.songsPool.at(random);
     this.instance.songsPool.splice(random, 1);
-    return this.instance.songsPool.at(random);
+
+    return res;
   }
 
   public removeClient(client: AuthSocket): void {
