@@ -1,13 +1,9 @@
 import { Socket } from "socket.io";
 import { Room } from "./Room";
+import { IUser } from "./UserTypes";
 
 export type AuthSocket = Socket & {
-  data: {
-    uid: string;
-    name: string;
-    email: string;
-    avatar: File | null;
+  data: IUser & {
     lobby: null | Room;
-    ready: boolean;
   };
 };

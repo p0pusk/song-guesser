@@ -4,6 +4,8 @@ export type IUser = {
   email: string;
   avatar: File | null;
   ready: boolean;
+  points: number;
+  answered: boolean;
 };
 
 export type ISong = {

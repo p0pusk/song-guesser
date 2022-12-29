@@ -16,6 +16,8 @@ export function PregameButtons() {
     players,
     hostId,
     isListening,
+    isWaiting,
+    setWaiting,
     setListening,
     isChecking,
     setChecking,

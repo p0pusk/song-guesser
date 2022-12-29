@@ -102,6 +102,7 @@ export class RoomController {
     try {
       const data = this.roomManager.getClientsData(message.roomId);
       socket.emit("get_clients_success", { data: data });
+      console.log(data);
     } catch (e) {
       socket.emit("get_clients_error", { error: e });
     }
@@ -145,23 +146,44 @@ export class RoomController {
       console.log(socket.data.lobby.instance.songsPool);
       const song = socket.data.lobby.getNextSong();
       console.log(song);
-      socket.data.lobby.emit("next_round", { data: song });
+      socket.data.lobby.emit("next_round", {
+        song: song,
+        round: socket.data.lobby.instance.currentRound,
+      });
     }
   }
 
   @OnMessage("player_answer")
-  public playerAnswer(
-    @ConnectedSocket() socket: AuthSocket,
-    @MessageBody() message: { uid: string }
-  ) {
-    socket.data.lobby.emit("player_answer", { uid: message.uid });
+  public playerAnswer(@ConnectedSocket() socket: AuthSocket) {
+    socket.data.lobby.emit("player_answer", {
+      uid: socket.data.uid,
+      name: socket.data.name,
+    });
+  }
+
+  @OnMessage("answer_correct")
+  public answer_correct(@ConnectedSocket() socket: AuthSocket) {
+    socket.data.points++;
+    socket.data.lobby.emit("answer_correct");
   }
 
   @OnMessage("round_end")
   public roundEnd(
     @ConnectedSocket() socket: AuthSocket,
     @MessageBody() message: any
-  ) {}
+  ) {
+    console.log(socket.data.lobby.instance.songsPool);
+    if (socket.data.lobby.instance.songsPool.length > 0) {
+      const song = socket.data.lobby.getNextSong();
+      socket.data.lobby.instance.currentRound++;
+      socket.data.lobby.emit("next_round", {
+        song: song,
+        round: socket.data.lobby.instance.currentRound,
+      });
+    } else {
+      socket.data.lobby.emit("game_end");
+    }
+  }
 
   @OnMessage("submit_song")
   public submitSong(
@@ -173,6 +195,19 @@ export class RoomController {
     } catch (e) {
       console.log(e);
     }
+  }
+
+  @OnMessage("submit_answer")
+  public submitAnswer(
+    @ConnectedSocket() socket: AuthSocket,
+    @MessageBody() message: { answer: string }
+  ) {
+    socket.data.lobby.emit("player_submit_answer", {
+      uid: socket.data.uid,
+      name: socket.data.name,
+      answer: message.answer,
+      song: socket.data.lobby.instance.curentSong,
+    });
   }
 
   @OnDisconnect()

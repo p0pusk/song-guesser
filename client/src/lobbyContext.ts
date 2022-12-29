@@ -6,6 +6,8 @@ export interface ILobbyContextProps {
   setPlayers: (new_players: IUser[] | undefined) => void;
   hostId: string;
   setHostId: (host: string) => void;
+  isWaiting: boolean;
+  setWaiting: (waiting: boolean) => void;
   isSelecting: boolean;
   setSelecting: (selecting: boolean) => void;
   isReady: boolean;
@@ -18,6 +20,10 @@ export interface ILobbyContextProps {
   setChecking: (checking: boolean) => void;
   canAnswer: boolean;
   setCanAnswer: (can: boolean) => void;
+  numAnswers: number;
+  setNumAnswers: (num: number) => void;
+  someoneAnswering: boolean;
+  setSomeoneAnswering: (is: boolean) => void;
 }
 
 const defaultState: ILobbyContextProps = {
@@ -25,6 +31,8 @@ const defaultState: ILobbyContextProps = {
   setPlayers: () => {},
   hostId: "",
   setHostId: () => {},
+  isWaiting: false,
+  setWaiting: () => {},
   isSelecting: false,
   setSelecting: () => {},
   isReady: false,
@@ -37,6 +45,10 @@ const defaultState: ILobbyContextProps = {
   setChecking: () => {},
   canAnswer: true,
   setCanAnswer: () => {},
+  numAnswers: 0,
+  setNumAnswers: () => {},
+  someoneAnswering: false,
+  setSomeoneAnswering: () => {},
 };
 
 export default React.createContext(defaultState);

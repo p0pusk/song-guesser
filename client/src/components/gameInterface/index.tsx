@@ -52,7 +52,8 @@ const FormButton = styled.button`
 `;
 
 export function GameInterface() {
-  const { isSelecting, setSelecting, setReady } = useContext(lobbyContext);
+  const { isSelecting, setSelecting, setReady, setWaiting } =
+    useContext(lobbyContext);
   const { login } = useContext(authContext);
   const [user] = useAuthState(auth);
   const [url, setUrl] = useState("");

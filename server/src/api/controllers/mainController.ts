@@ -28,6 +28,8 @@ export class MainController {
           email: data.email,
           avatar: data.avatar,
           ready: false,
+          answered: false,
+          points: 0,
         });
       } catch (err) {
         rej(err);

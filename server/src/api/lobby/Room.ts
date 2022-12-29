@@ -17,6 +17,9 @@ export class Room {
     this.clients.set(client.id, client);
     client.join(this.id);
     client.data.lobby = this;
+    client.data.points = 0;
+    client.data.answered = false;
+    client.data.ready = false;
   }
 
   public emit(message: any, args: any = undefined) {
@@ -36,6 +39,7 @@ export class Room {
     const random = Math.floor(Math.random() * max);
     const res = this.instance.songsPool.at(random);
     this.instance.songsPool.splice(random, 1);
+    this.instance.curentSong = res;
 
     return res;
   }

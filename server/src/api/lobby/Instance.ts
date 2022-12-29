@@ -14,5 +14,7 @@ export class Instance {
 
   public songsPool: ISong[] = new Array<ISong>();
 
+  public curentSong: ISong = null;
+
   constructor(private readonly lobby: Room) {}
 }

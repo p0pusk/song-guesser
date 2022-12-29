@@ -10,6 +10,7 @@ import lobbyContext, { ILobbyContextProps } from "../../lobbyContext";
 import gameService, { ISong, IUser } from "../../services/gameService";
 import socketService from "../../services/socketService";
 import { GameInterface } from "../gameInterface";
+import { AnswerButtons } from "../gameUI/answerButtons";
 import { PregameButtons } from "../gameUI/pregameButtons";
 
 export function Game() {
@@ -17,26 +18,34 @@ export function Game() {
 
   const [user, loading, error] = useAuthState(auth);
   const [hostId, setHostId] = useState("");
+  const [isWaiting, setWaiting] = useState(false);
   const [isSelecting, setSelecting] = useState(false);
   const [isReady, setReady] = useState(false);
   const [isAnswering, setAnswering] = useState(false);
   const [isChecking, setChecking] = useState(false);
   const [canAnswer, setCanAnswer] = useState(true);
+  const [numAnswers, setNumAnswers] = useState(0);
   const { roomId, isInGame, setInGame } = useContext(gameContext);
   const [players, setPlayers] = useState<IUser[]>();
   const [isListening, setListening] = useState(false);
+  const [curAnswer, setCurAnswer] = useState("");
+  const [someoneAnswering, setSomeoneAnswering] = useState(false);
   const [song, setSong] = useState({
     url: "https://www.youtube.com/watch?v=-_3dc6X-Iwo",
     answer: "",
     holderID: "",
     holderName: "",
   });
+  const [answeringName, setAnsweringName] = useState("");
+  const [curRound, setCurRound] = useState(1);
 
   const lobbyContextValues: ILobbyContextProps = {
     players,
     setPlayers,
     hostId,
     setHostId,
+    isWaiting,
+    setWaiting,
     isSelecting,
     setSelecting,
     isReady,
@@ -49,6 +58,10 @@ export function Game() {
     setChecking,
     canAnswer,
     setCanAnswer,
+    numAnswers,
+    setNumAnswers,
+    someoneAnswering,
+    setSomeoneAnswering,
   };
 
   const updatePlayers = async () => {
@@ -79,6 +92,7 @@ export function Game() {
       setInGame(true);
       updatePlayers();
       setSelecting(true);
+      setWaiting(true);
     });
 
     gameService.onPlayerLeave(socketService.socket, () => {
@@ -93,26 +107,59 @@ export function Game() {
     });
 
     socketService.socket.on("next_round", (message) => {
+      setCanAnswer(true);
+      setChecking(false);
+      setAnswering(false);
+      setWaiting(false);
+
       setSong({
-        url: message.data.url,
-        answer: message.data.answer,
-        holderID: message.data.holderID,
-        holderName: message.data.holderName,
+        url: message.song.url,
+        answer: message.song.answer,
+        holderID: message.song.holderID,
+        holderName: message.song.holderName,
       });
 
-      if (message.data.holderID === user.uid) {
+      console.log(song);
+
+      setCurRound(message.round);
+
+      if (message.song.holderID === user.uid) {
         setCanAnswer(false);
       }
       setListening(true);
     });
 
     socketService.socket.on("player_answer", (message) => {
+      setListening(false);
+      setAnsweringName(message.name);
       if (message.uid === user.uid) {
         setAnswering(true);
-      } else if (song.holderID === user.uid) {
-        console.log("cheking keke");
-        setChecking(true);
       }
+    });
+
+    socketService.socket.on(
+      "player_submit_answer",
+      (message: { uid: string; name: string; answer: string; song: ISong }) => {
+        console.log(message.name, "answering", message.answer);
+        if (message.song.holderID === user.uid) {
+          setChecking(true);
+        }
+        setSomeoneAnswering(true);
+        setCurAnswer(message.answer);
+      }
+    );
+
+    socketService.socket.on("answer_correct", () => {
+      updatePlayers();
+      alert(
+        `${answeringName} answered correct\nThe answer was "${song.answer}"`
+      );
+    });
+
+    socketService.socket.on("game_end", () => {
+      alert("Game Over");
+      setInGame(false);
+      navigation("/home/");
     });
   };
 
@@ -129,6 +176,22 @@ export function Game() {
     <LobbyContext.Provider value={lobbyContextValues}>
       <div className="App">
         <header className="App-header">
+          {isInGame ? (
+            <div>
+              <h1>Round {curRound}</h1>
+            </div>
+          ) : (
+            <></>
+          )}
+
+          {isListening ? (
+            <div>
+              <h2>Now playing ...?</h2>
+              <p>By: {song.holderName}</p>
+            </div>
+          ) : (
+            <></>
+          )}
           <div>
             {players?.map((value) => {
               return (
@@ -137,21 +200,14 @@ export function Game() {
                     ? "you"
                     : `player ${players.indexOf(value) + 1}`}
                   : {value.name}
-                  {isInGame ? (value.ready ? "(ready)" : "(preparing)") : ""}
+                  {isWaiting ? (value.ready ? "(ready)" : "(preparing)") : ""}
+                  {!isWaiting && isInGame ? `(points: ${value.points})` : ""}
                 </h4>
               );
             })}
           </div>
-          {isListening ? (
-            <div>
-              <h1>Now playing...</h1>
-              <p>Name: {song.answer}</p>
-              <p>By: {song.holderName}</p>
-            </div>
-          ) : (
-            <></>
-          )}
 
+          {someoneAnswering ? `${answeringName} answered: ${curAnswer}` : ""}
           <PregameButtons />
         </header>
         <ReactPlayer

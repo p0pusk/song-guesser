@@ -8,7 +8,7 @@ import socketService from "../../../services/socketService";
 
 export function LobbyButtons() {
   const { roomId, isInGame, setInGame } = useContext(gameContext);
-  const { players, hostId, isListening, setListening } =
+  const { players, hostId, isListening, setListening, setWaiting } =
     useContext(lobbyContext);
   const [user] = useAuthState(auth);
 
@@ -21,6 +21,7 @@ export function LobbyButtons() {
 
   const startGame = () => {
     socketService?.socket?.emit("start_game");
+    setWaiting(true);
   };
 
   return (

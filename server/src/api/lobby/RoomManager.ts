@@ -19,6 +19,8 @@ class RoomManager {
     client.data.uid = null;
     client.data.avatar = null;
     client.data.ready = false;
+    client.data.points = 0;
+    client.data.answered = false;
   }
 
   public terminateSocket(client: AuthSocket) {
@@ -56,6 +58,8 @@ class RoomManager {
         email: client.data.email,
         avatar: client.data.avatar,
         ready: client.data.ready,
+        points: client.data.points,
+        answered: client.data.answered,
       });
     });
     return data;
